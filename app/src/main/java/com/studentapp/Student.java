@@ -15,21 +15,22 @@ public class Student {
 
     public Student() {}
 
+    // Constructor with validation through setters
     public Student(String id, int age, String gender, int studyHoursPerWeek,
                    String preferredLearningStyle, int onlineCoursesCompleted,
                    int assignmentCompletionRate, int examScore, int attendanceRate) {
-        this.id = id;
-        this.age = age;
-        this.gender = gender;
-        this.studyHoursPerWeek = studyHoursPerWeek;
-        this.preferredLearningStyle = preferredLearningStyle;
-        this.onlineCoursesCompleted = onlineCoursesCompleted;
-        this.assignmentCompletionRate = assignmentCompletionRate;
-        this.examScore = examScore;
-        this.attendanceRate = attendanceRate;
+        setId(id);
+        setAge(age);
+        setGender(gender);
+        setStudyHoursPerWeek(studyHoursPerWeek);
+        setPreferredLearningStyle(preferredLearningStyle);
+        setOnlineCoursesCompleted(onlineCoursesCompleted);
+        setAssignmentCompletionRate(assignmentCompletionRate);
+        setExamScore(examScore);
+        setAttendanceRate(attendanceRate);
     }
 
-    // Getters
+    // Standard getters
     public String getId() { return id; }
     public int getAge() { return age; }
     public String getGender() { return gender; }
@@ -40,61 +41,46 @@ public class Student {
     public int getExamScore() { return examScore; }
     public int getAttendanceRate() { return attendanceRate; }
 
-    // Setters with validation
+    // Validated setters with input sanitization
     public void setId(String id) {
-        if (id != null && !id.trim().isEmpty()) {
-            this.id = id;
-        }
+        this.id = (id != null && !id.trim().isEmpty()) ? id.trim() : this.id;
     }
 
     public void setAge(int age) {
-        if (age > 0 && age < 120) {
-            this.age = age;
-        }
+        this.age = (age > 0 && age < 120) ? age : this.age; // Reasonable age range
     }
 
     public void setGender(String gender) {
-        if (gender != null && !gender.trim().isEmpty()) {
-            this.gender = gender;
-        }
+        this.gender = (gender != null && !gender.trim().isEmpty()) ? gender.trim() : this.gender;
     }
 
     public void setStudyHoursPerWeek(int studyHoursPerWeek) {
-        if (studyHoursPerWeek >= 0 && studyHoursPerWeek <= 168) {
-            this.studyHoursPerWeek = studyHoursPerWeek;
-        }
+        // Max 168 hours per week (24*7)
+        this.studyHoursPerWeek = (studyHoursPerWeek >= 0 && studyHoursPerWeek <= 168) ? studyHoursPerWeek : this.studyHoursPerWeek;
     }
 
     public void setPreferredLearningStyle(String preferredLearningStyle) {
-        if (preferredLearningStyle != null && !preferredLearningStyle.trim().isEmpty()) {
-            this.preferredLearningStyle = preferredLearningStyle;
-        }
+        this.preferredLearningStyle = (preferredLearningStyle != null && !preferredLearningStyle.trim().isEmpty()) ?
+                preferredLearningStyle.trim() : this.preferredLearningStyle;
     }
 
     public void setOnlineCoursesCompleted(int onlineCoursesCompleted) {
-        if (onlineCoursesCompleted >= 0) {
-            this.onlineCoursesCompleted = onlineCoursesCompleted;
-        }
+        this.onlineCoursesCompleted = Math.max(0, onlineCoursesCompleted); // Non-negative values only
     }
 
     public void setAssignmentCompletionRate(int assignmentCompletionRate) {
-        if (assignmentCompletionRate >= 0 && assignmentCompletionRate <= 100) {
-            this.assignmentCompletionRate = assignmentCompletionRate;
-        }
+        this.assignmentCompletionRate = Math.max(0, Math.min(100, assignmentCompletionRate)); // 0-100% range
     }
 
     public void setExamScore(int examScore) {
-        if (examScore >= 0 && examScore <= 100) {
-            this.examScore = examScore;
-        }
+        this.examScore = Math.max(0, Math.min(100, examScore)); // 0-100 score range
     }
 
     public void setAttendanceRate(int attendanceRate) {
-        if (attendanceRate >= 0 && attendanceRate <= 100) {
-            this.attendanceRate = attendanceRate;
-        }
+        this.attendanceRate = Math.max(0, Math.min(100, attendanceRate)); // 0-100% range
     }
 
+    // Equality based on student ID only
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -110,9 +96,6 @@ public class Student {
 
     @Override
     public String toString() {
-        return "Student{" +
-                "id='" + id + '\'' +
-                ", examScore=" + examScore +
-                '}';
+        return String.format("Student{id='%s', examScore=%d}", id, examScore);
     }
 }

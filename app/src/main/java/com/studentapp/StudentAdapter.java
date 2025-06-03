@@ -14,6 +14,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
     private List<Student> students;
     private OnStudentClickListener listener;
 
+    // Interface for handling student item clicks
     public interface OnStudentClickListener {
         void onStudentClick(Student student);
     }
@@ -26,6 +27,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Inflate the layout for each student item
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.student_item, parent, false);
         return new ViewHolder(view);
@@ -33,6 +35,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        // Bind student data to the view holder
         Student student = students.get(position);
         holder.bind(student, listener);
     }
@@ -47,16 +50,19 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Initialize text views for student information
             studentIdText = itemView.findViewById(R.id.studentIdText);
             examScoreText = itemView.findViewById(R.id.examScoreText);
             rankText = itemView.findViewById(R.id.rankText);
         }
 
         void bind(Student student, OnStudentClickListener listener) {
+            // Populate views with student data
             studentIdText.setText("ID: " + student.getId());
             examScoreText.setText("Score: " + student.getExamScore());
             rankText.setText("Rank: " + (getAdapterPosition() + 1));
 
+            // Set click listener for the entire item
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

@@ -14,12 +14,12 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ChartActivity extends AppCompatActivity {
     private BarChart barChart;
@@ -30,38 +30,34 @@ public class ChartActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chart);
 
+        // Setup action bar with back button
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Learning Style Performance");
         }
 
+        // Initialize chart and load student data
         barChart = findViewById(R.id.barChart);
         studentRankMap = CSVParser.parseStudentsCSV(this, "students.csv");
-
         setupChart();
     }
 
     private void setupChart() {
-        Map<String, List<Integer>> learningStyleScores = new HashMap<>();
+        // Group students by learning style and collect their exam scores
+        Map<String, List<Integer>> learningStyleScores = studentRankMap.keySet().stream()
+                .collect(Collectors.groupingBy(
+                        Student::getPreferredLearningStyle,
+                        Collectors.mapping(Student::getExamScore, Collectors.toList())
+                ));
 
-        // Group scores by learning style
-        for (Student student : studentRankMap.keySet()) {
-            String style = student.getPreferredLearningStyle();
-            if (!learningStyleScores.containsKey(style)) {
-                learningStyleScores.put(style, new ArrayList<>());
-            }
-            learningStyleScores.get(style).add(student.getExamScore());
-        }
-
-        // Calculate averages and create chart entries
         List<BarEntry> entries = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         int index = 0;
 
+        // Calculate average scores for each learning style
         for (Map.Entry<String, List<Integer>> entry : learningStyleScores.entrySet()) {
             String style = entry.getKey();
             List<Integer> scores = entry.getValue();
-
             double average = scores.stream().mapToInt(Integer::intValue).average().orElse(0.0);
 
             entries.add(new BarEntry(index, (float) average));
@@ -69,14 +65,14 @@ public class ChartActivity extends AppCompatActivity {
             index++;
         }
 
+        // Create dataset with colors and styling
         BarDataSet dataSet = new BarDataSet(entries, "Average Exam Scores by Learning Style");
 
-        // Set colors
         int[] colors = {
-                Color.rgb(255, 102, 102), // Light Red
-                Color.rgb(102, 178, 255), // Light Blue
-                Color.rgb(255, 204, 102), // Light Orange
-                Color.rgb(153, 204, 153)  // Light Green
+                Color.rgb(52, 152, 219),
+                Color.rgb(231, 76, 60),
+                Color.rgb(46, 204, 113),
+                Color.rgb(241, 196, 15)
         };
         dataSet.setColors(colors);
         dataSet.setValueTextSize(12f);
@@ -85,43 +81,83 @@ public class ChartActivity extends AppCompatActivity {
         BarData barData = new BarData(dataSet);
         barData.setBarWidth(0.6f);
 
-        // Configure chart
+        // Configure chart appearance and behavior
+        configureChartLayout();
+        configureAxes(labels);
+        configureLegend();
+
+        // Apply data and animate chart
         barChart.setData(barData);
+        barChart.animateY(1200);
+        barChart.invalidate();
+    }
+
+    private void configureChartLayout() {
+        barChart.setExtraOffsets(16f, 16f, 16f, 40f);
+
         barChart.setFitBars(true);
         barChart.getDescription().setEnabled(false);
         barChart.setDrawGridBackground(false);
+        barChart.setPinchZoom(false);
+        barChart.setDoubleTapToZoomEnabled(false);
+        barChart.setScaleEnabled(false);
 
-        // Configure X-axis
+        barChart.setDrawBarShadow(false);
+        barChart.setDrawValueAboveBar(true);
+    }
+
+    private void configureAxes(List<String> labels) {
+        // Setup X-axis with learning style labels
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setGranularity(1f);
         xAxis.setTextSize(12f);
         xAxis.setDrawGridLines(false);
+        xAxis.setDrawAxisLine(true);
+        xAxis.setAxisLineColor(Color.DKGRAY);
+        xAxis.setTextColor(Color.DKGRAY);
+        xAxis.setLabelRotationAngle(-15f);
 
-        // Configure Y-axis
+        // Setup Y-axis for score values (0-100)
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
+        leftAxis.setAxisMaximum(100f);
         leftAxis.setTextSize(12f);
         leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(Color.LTGRAY);
+        leftAxis.setDrawAxisLine(true);
+        leftAxis.setAxisLineColor(Color.DKGRAY);
+        leftAxis.setTextColor(Color.DKGRAY);
+        leftAxis.setGranularity(10f);
 
-        YAxis rightAxis = barChart.getAxisRight();
-        rightAxis.setEnabled(false);
+        barChart.getAxisRight().setEnabled(false);
+    }
 
-        // Configure legend
+    private void configureLegend() {
         Legend legend = barChart.getLegend();
         legend.setEnabled(true);
-        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-        legend.setOrientation(Legend.LegendOrientation.VERTICAL);
-        legend.setDrawInside(true);
 
-        barChart.animateY(1000);
-        barChart.invalidate();
+        legend.setDrawInside(false);
+
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+
+        legend.setForm(Legend.LegendForm.SQUARE);
+        legend.setFormSize(12f);
+        legend.setTextSize(11f);
+        legend.setTextColor(Color.DKGRAY);
+        legend.setXEntrySpace(8f);
+        legend.setYEntrySpace(4f);
+        legend.setFormToTextSpace(4f);
+
+        legend.setYOffset(8f);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle back button press
         if (item.getItemId() == android.R.id.home) {
             finish();
             return true;

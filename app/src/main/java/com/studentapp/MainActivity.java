@@ -6,85 +6,69 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
+
     private HashMap<Student, Integer> studentRankMap;
     private RecyclerView recyclerView;
     private StudentAdapter adapter;
     private EditText searchEditText;
-    private Button searchButton, chartButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initViews();
-        loadData();
+        // Initialize all UI components and data
+        initializeViews();
+        loadStudentData();
         setupRecyclerView();
         setupClickListeners();
     }
 
-    private void initViews() {
+    private void initializeViews() {
         recyclerView = findViewById(R.id.recyclerView);
         searchEditText = findViewById(R.id.searchEditText);
-        searchButton = findViewById(R.id.searchButton);
-        chartButton = findViewById(R.id.chartButton);
+        Button searchButton = findViewById(R.id.searchButton);
+        Button chartButton = findViewById(R.id.chartButton);
+
+        searchButton.setOnClickListener(v -> searchStudent());
+        chartButton.setOnClickListener(v -> openChartScreen());
     }
 
-    private void loadData() {
+    private void loadStudentData() {
+        // Parse CSV file and create student-rank mapping
         studentRankMap = CSVParser.parseStudentsCSV(this, "students.csv");
+        if (studentRankMap.isEmpty()) {
+            Toast.makeText(this, "Error: No student data loaded", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setupRecyclerView() {
+        // Display top 10 performing students in RecyclerView
         List<Student> topStudents = getTopPerformers();
-        adapter = new StudentAdapter(topStudents, new StudentAdapter.OnStudentClickListener() {
-            @Override
-            public void onStudentClick(Student student) {
-                openStudentDetails(student);
-            }
-        });
+        adapter = new StudentAdapter(topStudents, this::openStudentDetails);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
 
     private void setupClickListeners() {
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                searchStudent();
-            }
-        });
-
-        chartButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openChartScreen();
-            }
-        });
+        findViewById(R.id.searchButton).setOnClickListener(v -> searchStudent());
+        findViewById(R.id.chartButton).setOnClickListener(v -> openChartScreen());
     }
 
     private List<Student> getTopPerformers() {
+        // Sort all students by exam score and return top 10
         List<Student> allStudents = new ArrayList<>(studentRankMap.keySet());
-        Collections.sort(allStudents, new Comparator<Student>() {
-            @Override
-            public int compare(Student s1, Student s2) {
-                return Integer.compare(s2.getExamScore(), s1.getExamScore());
-            }
-        });
-
-        // Return top 10 or all if less than 10
+        allStudents.sort(Comparator.comparingInt(Student::getExamScore).reversed());
         int limit = Math.min(10, allStudents.size());
         return allStudents.subList(0, limit);
     }
@@ -96,13 +80,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Student foundStudent = null;
-        for (Student student : studentRankMap.keySet()) {
-            if (student.getId().equals(searchId)) {
-                foundStudent = student;
-                break;
-            }
-        }
+        // Find student by ID using stream API
+        Student foundStudent = studentRankMap.keySet().stream()
+                .filter(student -> student.getId().equals(searchId))
+                .findFirst()
+                .orElse(null);
 
         if (foundStudent != null) {
             openStudentDetails(foundStudent);
@@ -112,14 +94,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openStudentDetails(Student student) {
+        // Navigate to student details screen with student ID
         Intent intent = new Intent(this, StudentDetailsActivity.class);
         intent.putExtra("student_id", student.getId());
         startActivity(intent);
     }
 
     private void openChartScreen() {
-        Intent intent = new Intent(this, ChartActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, ChartActivity.class));
     }
 
     public HashMap<Student, Integer> getStudentRankMap() {
